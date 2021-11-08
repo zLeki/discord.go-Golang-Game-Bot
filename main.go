@@ -3,8 +3,8 @@ import (
   "fmt"
   "github.com/bwmarrin/discordgo"
   "os"
-	"os/signal"
-	"syscall"
+  "os/signal"
+  "syscall"
   "math/rand"
   "time"
 )
