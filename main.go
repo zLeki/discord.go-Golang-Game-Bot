@@ -3,8 +3,8 @@ import (
   "fmt"
   "github.com/bwmarrin/discordgo"
   "os"
-  "os/signal"
-  "syscall"
+	"os/signal"
+	"syscall"
   "math/rand"
   "time"
 )
@@ -12,7 +12,7 @@ import (
 var originaluserid = ""
 var originalmessageid = ""
 func main() {
-     dg, err := discordgo.New("Bot " + "token.......YYQrYQ.fz9qMd1fmYs7-8QCvfWDM4Ey1dU")
+     dg, err := discordgo.New("Bot " + "real")
     if err != nil {
         fmt.Println("error created while making a bot")
         return
@@ -43,7 +43,8 @@ func help(s *discordgo.Session, m *discordgo.MessageCreate) {
 func source(s *discordgo.Session, m *discordgo.MessageCreate) {
   if m.Author.ID != s.State.User.ID {
     if m.Content == ".source" {
-      
+      embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Golang Game bot source code", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Visit the repository here", Value:  "https://github.com/zLeki/discord.go-Golang-Game-Bot", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://opengraph.githubassets.com/1d74613fd71a8b3a3271d6bcf224e2f382c09ceaa7a67da525473e2658fbfea2/zLeki/discord.go-Golang-Game-Bot",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Source code!",}
+      s.ChannelMessageSendEmbed(m.ChannelID, embed)
     }
   }
 }
