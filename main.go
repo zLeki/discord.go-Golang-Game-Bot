@@ -16,12 +16,15 @@ import (
 var wins = 0
 var losses = 0
 var ties = 0
+var bjwins = 0
+var bjlosses =0 
+var bjties = 0
 var playertotal = 0
 var enemytotal = 0
 var originaluserid = ""
 var originalmessageid = ""
 func main() {
-     dg, err := discordgo.New("Bot " + "big black nibba balls")
+     dg, err := discordgo.New("Bot " + "shitass yum")
     if err != nil {
         fmt.Println("error created while making a bot")
         return
@@ -84,7 +87,10 @@ func stats(s* discordgo.Session, m *discordgo.MessageCreate) {
     
     print(wins, ties, losses)    
     embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Total game stats", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Rock Paper Scissors Stats", Value:  "Wins: "+strconv.Itoa(wins)+"\nLosses: "+strconv.Itoa(losses)+"\nTies: "+strconv.Itoa(ties), Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/i7G2Yuc.png"}, Timestamp: time.Now().Format(time.RFC3339)} 
+
         s.ChannelMessageSendEmbed(m.ChannelID, embed)
+        embed2 := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Total game stats", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Blackjack Stats", Value:  "Wins: "+strconv.Itoa(bjwins)+"\nLosses: "+strconv.Itoa(bjlosses)+"\nTies: "+strconv.Itoa(bjties), Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339)} 
+        s.ChannelMessageSendEmbed(m.ChannelID, embed2)
       }
         // fmt.Println("User Type: " + users.Users[i].Type)
         // fmt.Println("User Age: " + strconv.Itoa(users.Users[i].Age))
@@ -141,7 +147,7 @@ func on_message(s *discordgo.Session, m *discordgo.MessageCreate) {
 func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
     if r.UserID != s.State.User.ID {
       if r.UserID == originaluserid {
-        if r.MessageReaction.MessageID == originalmessageid {
+        fmt.Println(r.Emoji.Name, r.ChannelID)
         player1hand := []int{}
         player2hand := []int{}
         
@@ -154,6 +160,7 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
                 "paper", // paper
                 "scissors") // scissors
         selected := reasons[rand.Intn(len(reasons))]
+
         if r.Emoji.Name == "🎴" { // BlackJack part 1
           
           //s.ChannelMessageSend(r.ChannelID, strconv.Itoa())
@@ -187,48 +194,6 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
             fmt.Println("You lose")
           }
         }
-        
-        if r.Emoji.Name == "⬆️" {
-          for {
-          // for i := 0; i < 2; i++ {
-          //     min := 2
-          //     max := 11
-          //   player1hand = append(player1hand, rand.Intn(max - min) + min)
-          //}
-          min := 2
-          max := 11
-          rand.Seed(time.Now().UnixNano())
-          playertotal += rand.Intn(max - min) + min
-          var distance = enemytotal - 21
-          if distance <= 16 {
-            min := 2
-            max := 11
-            rand.Seed(time.Now().UnixNano())
-            enemytotal += rand.Intn(max - min) + min
-
-          }
-          if playertotal <= 21 || enemytotal <= 21 {
-            embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
-            msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
-            if err != nil {
-                fmt.Println(err)
-              }
-              fmt.Println(playertotal, enemytotal)
-              originalmessageid = msg.ID
-              s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
-              s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
-            if enemytotal > 21 || playertotal == 21{
-            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
-            s.ChannelMessageSendEmbed(r.ChannelID, embed)
-            }
-            if playertotal > 21 {
-            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
-            s.ChannelMessageSendEmbed(r.ChannelID, embed)
-            }}
-            break;
-            return
-          }
-        
         if r.Emoji.Name == "✂️" {
             if selected != "scissors" {
                 if selected == "rock" { 
@@ -293,5 +258,193 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
       }}
     }
-    }
-}}
+ 
+        if r.Emoji.Name == "⏸️" {
+          if r.UserID == s.State.User.ID {
+            return
+          }
+          print("hi")
+          if enemytotal <= 16 {
+            min := 2
+            max := 11
+            rand.Seed(time.Now().UnixNano())
+            enemytotal += rand.Intn(max - min) + min
+            s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
+            time.Sleep(1 * time.Second)
+            if playertotal <= 21 || enemytotal <= 21 {
+            embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
+            msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            if err != nil {
+                fmt.Println(err)
+              }
+              fmt.Println(playertotal, enemytotal)
+            originalmessageid = msg.ID
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+            if enemytotal > 21 || playertotal == 21{
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
+            bjwins +=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            return
+            }
+            if playertotal > 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            return
+            if enemytotal == 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            return
+            }}}
+          }else{
+          s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
+          
+          time.Sleep(1 * time.Second)
+          if playertotal > enemytotal {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            bjwins+=1
+            return
+            
+          }
+          if enemytotal > playertotal {
+                        embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+              bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            return
+          }
+          if enemytotal == playertotal {
+                        embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/eYfecUy.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Its a tie!",}
+                        bjties+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            return
+          }
+          if playertotal <= 21 || enemytotal <= 21 {
+            embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
+            msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            if err != nil {
+                fmt.Println(err)
+              }
+              fmt.Println(playertotal, enemytotal)
+            originalmessageid = msg.ID
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+            if enemytotal > 21 || playertotal == 21{
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
+            bjwins+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            return
+            }
+            if playertotal > 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            return
+            if enemytotal == 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            return
+            }}}
+            
+          }
+        }
+        if r.Emoji.Name == "⬆️" {
+          if r.UserID == s.State.User.ID {
+            return
+          }
+          
+          // for i := 0; i < 2; i++ {
+          //     min := 2
+          //     max := 11
+          //   player1hand = append(player1hand, rand.Intn(max - min) + min)
+          //}
+          
+          if enemytotal <= 16 {
+            min := 2
+            max := 11
+            rand.Seed(time.Now().UnixNano())
+            enemytotal += rand.Intn(max - min) + min
+            rand.Seed(time.Now().UnixNano())
+            playertotal += rand.Intn(max - min) + min
+            s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
+            time.Sleep(1 * time.Second)
+            if playertotal <= 21 || enemytotal <= 21 {
+            embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
+            msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            if err != nil {
+                fmt.Println(err)
+              }
+              fmt.Println(playertotal, enemytotal)
+            originalmessageid = msg.ID
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+            if enemytotal > 21 || playertotal == 21{
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
+            bjwins+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            
+            }
+            if playertotal > 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            
+            if enemytotal == 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            
+            }}}
+          }else{
+          s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
+          time.Sleep(1 * time.Second)
+          min := 2
+          max := 11
+          rand.Seed(time.Now().UnixNano())
+          playertotal += rand.Intn(max - min) + min
+          if playertotal <= 21 || enemytotal <= 21 {
+            embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
+            msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            if err != nil {
+                fmt.Println(err)
+              }
+              fmt.Println(playertotal, enemytotal)
+            originalmessageid = msg.ID
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+            if enemytotal > 21 || playertotal == 21{
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
+            bjwins+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            
+            }
+            if playertotal > 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            
+            if enemytotal == 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            bjlosses+=1
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            
+            
+            }}}
+          }
+          }
+        }
+
