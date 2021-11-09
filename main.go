@@ -11,8 +11,6 @@ import (
 )
 
 
-// Social struct which contains a
-// list of links
 var wins = 0
 var losses = 0
 var ties = 0
@@ -24,7 +22,7 @@ var enemytotal = 0
 var originaluserid = ""
 var originalmessageid = ""
 func main() {
-     dg, err := discordgo.New("Bot " + "#queen #wap #wine4life")
+     dg, err := discordgo.New("Bot " + "fixed")
     if err != nil {
         fmt.Println("error created while making a bot")
         return
@@ -50,7 +48,7 @@ func main() {
 func help(s *discordgo.Session, m *discordgo.MessageCreate) {
   if m.Content == ".help" {
   if m.Author.ID != s.State.User.ID {
-    s.ChannelMessageSend(m.ChannelID, "```All commands will be here\n.rps\n.ping```")
+    s.ChannelMessageSend(m.ChannelID, "```All commands will be here\n.rps\n.ping\n.bj\n.source```")
     
   }}
 }
@@ -92,16 +90,11 @@ func stats(s* discordgo.Session, m *discordgo.MessageCreate) {
         embed2 := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Total game stats", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Blackjack Stats", Value:  "Wins: "+strconv.Itoa(bjwins)+"\nLosses: "+strconv.Itoa(bjlosses)+"\nTies: "+strconv.Itoa(bjties), Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339)} 
         s.ChannelMessageSendEmbed(m.ChannelID, embed2)
       }
-        // fmt.Println("User Type: " + users.Users[i].Type)
-        // fmt.Println("User Age: " + strconv.Itoa(users.Users[i].Age))
-        // fmt.Println("User Name: " + users.Users[i].Name)
-        // fmt.Println("Facebook Url: " + users.Users[i].Social.Facebook)
     }
 
 }
   
-    // }
-    //fmt.Println(strconv.Itoa(users.Users[0].wins))
+
     
 
 func source(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -361,11 +354,7 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
             return
           }
           
-          // for i := 0; i < 2; i++ {
-          //     min := 2
-          //     max := 11
-          //   player1hand = append(player1hand, rand.Intn(max - min) + min)
-          //}
+
           
           if enemytotal <= 18 {
             min := 2
