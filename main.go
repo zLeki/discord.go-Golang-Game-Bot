@@ -24,7 +24,7 @@ var enemytotal = 0
 var originaluserid = ""
 var originalmessageid = ""
 func main() {
-     dg, err := discordgo.New("Bot " + "shitass yum")
+     dg, err := discordgo.New("Bot " + "#queen #wap #wine4life")
     if err != nil {
         fmt.Println("error created while making a bot")
         return
@@ -264,13 +264,13 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
             return
           }
           print("hi")
-          if enemytotal <= 16 {
+          if enemytotal <= 18 {
             min := 2
             max := 11
             rand.Seed(time.Now().UnixNano())
             enemytotal += rand.Intn(max - min) + min
             s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
-            time.Sleep(1 * time.Second)
+        
             if playertotal <= 21 || enemytotal <= 21 {
             embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
             msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
@@ -304,7 +304,6 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
           }else{
           s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
           
-          time.Sleep(1 * time.Second)
           if playertotal > enemytotal {
             embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
             s.ChannelMessageSendEmbed(r.ChannelID, embed)
@@ -368,7 +367,7 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
           //   player1hand = append(player1hand, rand.Intn(max - min) + min)
           //}
           
-          if enemytotal <= 16 {
+          if enemytotal <= 18 {
             min := 2
             max := 11
             rand.Seed(time.Now().UnixNano())
@@ -376,7 +375,6 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
             rand.Seed(time.Now().UnixNano())
             playertotal += rand.Intn(max - min) + min
             s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
-            time.Sleep(1 * time.Second)
             if playertotal <= 21 || enemytotal <= 21 {
             embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
             msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
@@ -409,7 +407,6 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
             }}}
           }else{
           s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
-          time.Sleep(1 * time.Second)
           min := 2
           max := 11
           rand.Seed(time.Now().UnixNano())
