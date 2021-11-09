@@ -7,12 +7,21 @@ import (
 	"syscall"
   "math/rand"
   "time"
+  "strconv"
 )
 
+
+// Social struct which contains a
+// list of links
+var wins = 0
+var losses = 0
+var ties = 0
+var playertotal = 0
+var enemytotal = 0
 var originaluserid = ""
 var originalmessageid = ""
 func main() {
-     dg, err := discordgo.New("Bot " + "real")
+     dg, err := discordgo.New("Bot " + "big black nibba balls")
     if err != nil {
         fmt.Println("error created while making a bot")
         return
@@ -22,6 +31,8 @@ func main() {
     dg.AddHandler(help)
     dg.AddHandler(ping)
     dg.AddHandler(source)
+    dg.AddHandler(stats)
+    dg.AddHandler(black_jack)
     err = dg.Open()
     if err != nil {
         fmt.Println("Error created while opening the bot", err)
@@ -40,9 +51,58 @@ func help(s *discordgo.Session, m *discordgo.MessageCreate) {
     
   }}
 }
+
+
+func black_jack(s *discordgo.Session, m *discordgo.MessageCreate) {
+  
+  if m.Content == ".bj" {
+      originaluserid = m.Author.ID
+      
+      embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack prompt", Value:  "React below to start the game!", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord Black Jack",}
+      msg, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+      if err != nil {
+        fmt.Println(err)
+      }
+      s.MessageReactionAdd(m.ChannelID, msg.ID, "🎴")
+      originalmessageid = msg.ID
+  }
+}
+
+
+
+
+
+
+func stats(s* discordgo.Session, m *discordgo.MessageCreate) {
+  if m.Content == ".stats" {
+  if m.Author.ID != s.State.User.ID {
+  
+    
+    
+    
+    
+    
+    print(wins, ties, losses)    
+    embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Total game stats", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Rock Paper Scissors Stats", Value:  "Wins: "+strconv.Itoa(wins)+"\nLosses: "+strconv.Itoa(losses)+"\nTies: "+strconv.Itoa(ties), Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/i7G2Yuc.png"}, Timestamp: time.Now().Format(time.RFC3339)} 
+        s.ChannelMessageSendEmbed(m.ChannelID, embed)
+      }
+        // fmt.Println("User Type: " + users.Users[i].Type)
+        // fmt.Println("User Age: " + strconv.Itoa(users.Users[i].Age))
+        // fmt.Println("User Name: " + users.Users[i].Name)
+        // fmt.Println("Facebook Url: " + users.Users[i].Social.Facebook)
+    }
+
+}
+  
+    // }
+    //fmt.Println(strconv.Itoa(users.Users[0].wins))
+    
+
 func source(s *discordgo.Session, m *discordgo.MessageCreate) {
   if m.Author.ID != s.State.User.ID {
+
     if m.Content == ".source" {
+      
       embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Golang Game bot source code", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Visit the repository here", Value:  "https://github.com/zLeki/discord.go-Golang-Game-Bot", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://opengraph.githubassets.com/1d74613fd71a8b3a3271d6bcf224e2f382c09ceaa7a67da525473e2658fbfea2/zLeki/discord.go-Golang-Game-Bot",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Source code!",}
       s.ChannelMessageSendEmbed(m.ChannelID, embed)
     }
@@ -58,6 +118,10 @@ func on_message(s *discordgo.Session, m *discordgo.MessageCreate) {
     
     if m.Author.ID != s.State.User.ID {
         if m.Content == ".rps" {
+            
+            
+            
+            
             originaluserid = m.Author.ID
             msg, err := s.ChannelMessageSend(m.ChannelID, "Rock, Paper, Or Scissors?")
             if err != nil {
@@ -68,14 +132,21 @@ func on_message(s *discordgo.Session, m *discordgo.MessageCreate) {
             s.MessageReactionAdd(m.ChannelID, msg.ID, "🗿")
             s.MessageReactionAdd(m.ChannelID, msg.ID, "📄")
             s.MessageReactionAdd(m.ChannelID, msg.ID, "✂️")
+            
+            
+
         }
     }
 }
 func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
     if r.UserID != s.State.User.ID {
-      fmt.Println(originaluserid)
       if r.UserID == originaluserid {
         if r.MessageReaction.MessageID == originalmessageid {
+        player1hand := []int{}
+        player2hand := []int{}
+        
+
+        
         reasons := make([]string, 0)
         var paper = ":page_facing_up:"
         reasons = append(reasons,
@@ -83,56 +154,144 @@ func on_reaction(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
                 "paper", // paper
                 "scissors") // scissors
         selected := reasons[rand.Intn(len(reasons))]
+        if r.Emoji.Name == "🎴" { // BlackJack part 1
+          
+          //s.ChannelMessageSend(r.ChannelID, strconv.Itoa())
+          for i := 0; i < 2; i++ {
+              min := 2
+              max := 11
+              rand.Seed(time.Now().UnixNano())
+            player1hand = append(player1hand, rand.Intn(max - min) + min)
+          }
+          for i := 0; i < 2; i++ {
+              min := 2
+              max := 11
+              rand.Seed(time.Now().UnixNano())
+            player2hand = append(player2hand, rand.Intn(max - min) + min)
+          }
+          if player1hand[0] + player1hand[1] != 21 || player2hand[0] + player2hand[1] != 21 {
+            enemytotal = player2hand[0] + player2hand[1]
+            playertotal = player1hand[0] + player1hand[1]
+            embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n**"+strconv.Itoa(player2hand[0])+"+"+strconv.Itoa(player2hand[1])+" = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n**"+strconv.Itoa(player1hand[0])+"+"+strconv.Itoa(player1hand[1])+" = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
+            msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+
+            fmt.Println(playertotal, enemytotal)
+            if err != nil {
+              fmt.Println(err)
+            }
+            originalmessageid = msg.ID
+            s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+            s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+
+          }else{
+            fmt.Println("You lose")
+          }
+        }
+        
+        if r.Emoji.Name == "⬆️" {
+          for {
+          // for i := 0; i < 2; i++ {
+          //     min := 2
+          //     max := 11
+          //   player1hand = append(player1hand, rand.Intn(max - min) + min)
+          //}
+          min := 2
+          max := 11
+          rand.Seed(time.Now().UnixNano())
+          playertotal += rand.Intn(max - min) + min
+          var distance = enemytotal - 21
+          if distance <= 16 {
+            min := 2
+            max := 11
+            rand.Seed(time.Now().UnixNano())
+            enemytotal += rand.Intn(max - min) + min
+
+          }
+          if playertotal <= 21 || enemytotal <= 21 {
+            embed := &discordgo.MessageEmbed{Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name: "Black jack", Value:  "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", Inline: true,}, }, Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://imgur.com/BbgsSmC.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Discord black jack",}
+            msg, err := s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            if err != nil {
+                fmt.Println(err)
+              }
+              fmt.Println(playertotal, enemytotal)
+              originalmessageid = msg.ID
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+              s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+            if enemytotal > 21 || playertotal == 21{
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/weMIf70.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            }
+            if playertotal > 21 {
+            embed := &discordgo.MessageEmbed{Thumbnail: &discordgo.MessageEmbedThumbnail{URL: "https://i.imgur.com/v3w00UP.png"}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
+            s.ChannelMessageSendEmbed(r.ChannelID, embed)
+            }}
+            break;
+            return
+          }
         
         if r.Emoji.Name == "✂️" {
             if selected != "scissors" {
                 if selected == "rock" { 
+
                     
                     embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":left_facing_fist:"+":"+selected+":", Value:  "You lose :skull:", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/3d4362903ae98dce9d36898f45cff353.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose :skull:",}
+                    losses +=1
                     s.ChannelMessageSendEmbed(r.ChannelID, embed)
                 }else if selected == "paper" {
-                    embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":right_facing_fist:"+paper, Value:  "You win :tada:", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/b451ed25527ea5272274145889bae8a8.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
+                    
+                    embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":right_facing_fist:"+paper, Value:  "You win :tada:", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/8d200691ec87e5857708ada94c978d2c.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
                     s.ChannelMessageSendEmbed(r.ChannelID, embed)
+                    wins+=1
                 }
             }else {
+                
                 embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":handshake:"+":"+selected+":", Value:  `"Fair trade" - Drake`, Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/6a70a7536cb12cc32cdbfdf16b3942b3.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Its a tie!",}
                 s.ChannelMessageSendEmbed(r.ChannelID, embed)
+                ties+=1
             }
             
         }else if r.Emoji.Name == "📄" {
             if selected != "paper" {
                 if selected == "scissors" {
                   embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":left_facing_fist:"+":"+selected+":", Value:  "You lose :skull:", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/8d200691ec87e5857708ada94c978d2c.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose :skull:",}
+                  losses +=1
                     s.ChannelMessageSendEmbed(r.ChannelID, embed)
 
                 }else if selected == "rock" {
                   embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":right_facing_fist:"+":"+selected+":", Value:  "You win :tada:", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/b451ed25527ea5272274145889bae8a8.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
                     s.ChannelMessageSendEmbed(r.ChannelID, embed)
+                    wins+=1
                 }
             }else {
                 embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":handshake:"+paper, Value:  `"Fair trade" - Drake`, Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/19c1084097aec53ec86d2a88627f78a7.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Its a tie!",}
                 s.ChannelMessageSendEmbed(r.ChannelID, embed)
+                ties+=1
             }
         
         }else if r.Emoji.Name == "🗿" {
             if selected != "rock" {
                 if selected == "paper" {
                   embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results", Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":left_facing_fist:"+paper, Value:  "You lose :skull:", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/30f7ca6750c9a9eca2de6dab963591e7.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You lose!",}
-              
+              losses +=1
                     s.ChannelMessageSendEmbed(r.ChannelID, embed)
                 }else if selected == "scissors" {
                   embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results",Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":right_facing_fist:"+":"+selected+":", Value:  "You win :tada:", Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/ae13b787789add0b354bbe14e49d75d4.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "You win!",}
                 s.ChannelMessageSendEmbed(r.ChannelID, embed)
+                wins+=1
                 }
             }else {
               embed := &discordgo.MessageEmbed{Author:      &discordgo.MessageEmbedAuthor{}, Description: "Game results",Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{Name:   r.Emoji.Name+":handshake:"+":moyai:", Value:  `"Fair trade" - Drake`, Inline: true,}, }, Image: &discordgo.MessageEmbedImage{URL: "https://gyazo.com/0fc4cd0690ef3b133bc6a5b0539d03d2.gif",}, Timestamp: time.Now().Format(time.RFC3339), Title:     "Its a tie!",}
                 s.ChannelMessageSendEmbed(r.ChannelID, embed)
+              ties+=1
             }
+        
           originaluserid = ""
           fmt.Println(originaluserid)
           fmt.Println("tes")
-          return
-        }}
+          
+          
+
+      }}
     }
     }
-}
+}}
