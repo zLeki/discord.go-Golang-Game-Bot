@@ -69,7 +69,7 @@ func savetoJson(gametype string, wins int, losses int, ties int) {
 }
 
 func main() {
-	dg, err := discordgo.New("Bot " + "OTA1ODkxNjg5NTgxOTE2MjEw.YYQrYQ.r3CvlZc1-9UciD_xG-IUQ9978P4")
+	dg, err := discordgo.New("Bot " + "oops")
 	if err != nil {
 		fmt.Println("error created while making a bot")
 		return
