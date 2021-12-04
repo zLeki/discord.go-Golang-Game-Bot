@@ -1,4 +1,5 @@
 package main
+
 import (
 	"encoding/json"
 	"fmt"
@@ -22,28 +23,38 @@ type User struct {
 	Rps Rps `json:"rps"`
 }
 type Rps struct {
-	Wins int `json:"wins"`
+	Wins   int `json:"wins"`
 	Losses int `json:Losses`
-	Ties int `json:Ties`
+	Ties   int `json:Ties`
 }
 type BJ struct {
 	BlackJack BlackJack `json:"blackjack"`
 }
 type BlackJack struct {
-	Wins int `json:"wins"`
+	Wins   int `json:"wins"`
 	Losses int `json:Losses`
-	Ties int `json:Ties`
+	Ties   int `json:Ties`
 }
+type PlayerInfo struct {
+	P1Health int
+	P2Health int
+	P1Pots   int
+	P2Pots   int
+	P1Shield bool
+	P2Shield bool
+}
+
 var playertotal = 0
 var enemytotal = 0
 var originaluserid = ""
 var originalmessageid = ""
+var turn = 1
 func savetoJson(gametype string, wins int, losses int, ties int) {
 	fmt.Println(wins, losses, ties)
-	switch gametype{
+	switch gametype {
 	case "rps":
 		var jsonBlob = []byte(`
-            {"game": [{"`+gametype+`": {"wins": `+strconv.Itoa(wins)+`, "Losses": `+strconv.Itoa(losses)+`, "Ties": `+strconv.Itoa(ties)+`}}]}
+            {"game": [{"` + gametype + `": {"wins": ` + strconv.Itoa(wins) + `, "Losses": ` + strconv.Itoa(losses) + `, "Ties": ` + strconv.Itoa(ties) + `}}]}
         `)
 		rps := Games{}
 		err := json.Unmarshal(jsonBlob, &rps)
@@ -55,7 +66,7 @@ func savetoJson(gametype string, wins int, losses int, ties int) {
 		fmt.Println("%+v", rps)
 	case "blackjack":
 		var jsonBlob = []byte(`
-            {"game": [{"`+gametype+`": {"wins": `+strconv.Itoa(wins)+`, "Losses": `+strconv.Itoa(losses)+`, "Ties": `+strconv.Itoa(ties)+`}}]}
+            {"game": [{"` + gametype + `": {"wins": ` + strconv.Itoa(wins) + `, "Losses": ` + strconv.Itoa(losses) + `, "Ties": ` + strconv.Itoa(ties) + `}}]}
         `)
 		bj := Games2{}
 		err := json.Unmarshal(jsonBlob, &bj)
@@ -69,7 +80,7 @@ func savetoJson(gametype string, wins int, losses int, ties int) {
 }
 
 func main() {
-	dg, err := discordgo.New("Bot " + "oops")
+	dg, err := discordgo.New("Bot " + "token")
 	if err != nil {
 		fmt.Println("error created while making a bot")
 		return
@@ -83,6 +94,8 @@ func main() {
 	dg.AddHandler(black_jack)
 	dg.AddHandler(invite)
 	dg.AddHandler(on_ready)
+	dg.AddHandler(rpg)
+	dg.AddHandler(RpgBack)
 	err = dg.Open()
 	if err != nil {
 		fmt.Println("Error created while opening the bot", err)
@@ -101,80 +114,320 @@ func on_ready(s *discordgo.Session, e *discordgo.Ready) {
 func EmbedMsgHello(game string, title string, description string, Thumbnail string) *discordgo.MessageEmbed {
 	switch game {
 	case "bj":
-		embed := & discordgo.MessageEmbed {
-			Fields: [] * discordgo.MessageEmbedField { & discordgo.MessageEmbedField {
-				Name: "*",
-				Value: description,
+		embed := &discordgo.MessageEmbed{
+			Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{
+				Name:   "*",
+				Value:  description,
 				Inline: true,
 			},
 			},
-			Thumbnail: & discordgo.MessageEmbedThumbnail {
+			Thumbnail: &discordgo.MessageEmbedThumbnail{
 				URL: Thumbnail,
 			},
-			Footer: & discordgo.MessageEmbedFooter {
+			Footer: &discordgo.MessageEmbedFooter{
 				Text: "Made by Leki#6796",
 			},
 			Timestamp: time.Now().Format(time.RFC3339),
-			Title: title,
+			Title:     title,
 		}
 		return embed
 	case "rps":
-		embed := & discordgo.MessageEmbed {
-			Fields: [] * discordgo.MessageEmbedField { & discordgo.MessageEmbedField {
-				Name: "*",
-				Value: description,
+		embed := &discordgo.MessageEmbed{
+			Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{
+				Name:   "*",
+				Value:  description,
 				Inline: true,
 			},
 			},
-			Image: & discordgo.MessageEmbedImage {
+			Image: &discordgo.MessageEmbedImage{
 				URL: Thumbnail,
 			},
-			Footer: & discordgo.MessageEmbedFooter {
+			Footer: &discordgo.MessageEmbedFooter{
 				Text: "Made by Leki#6796",
 			},
 			Timestamp: time.Now().Format(time.RFC3339),
-			Title: title,
+			Title:     title,
 		}
 		return embed
 	}
-	embed := & discordgo.MessageEmbed {
-		Fields: [] * discordgo.MessageEmbedField { & discordgo.MessageEmbedField {
-			Name: "Missing information",
-			Value: "The developer of this bot is missing some information for this function, hopefully his dumbass can fix it soon",
+	embed := &discordgo.MessageEmbed{
+		Fields: []*discordgo.MessageEmbedField{&discordgo.MessageEmbedField{
+			Name:   "Missing information",
+			Value:  "The developer of this bot is missing some information for this function, hopefully his dumbass can fix it soon",
 			Inline: true,
 		},
 		},
-		Thumbnail: & discordgo.MessageEmbedThumbnail {
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: "https://i.imgur.com/NldSwaZ.png",
 		},
 		Timestamp: time.Now().Format(time.RFC3339),
-		Title: "Golang Game Bot",
+		Title:     "Golang Game Bot",
 	}
 	return embed
 }
+
 // ----------INVITE COMMAND ---------\\
-func invite(s * discordgo.Session, m* discordgo.MessageCreate) {
+func invite(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == ".invite" {
 		if m.Author.ID != s.State.User.ID {
 			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Invite me to your server!", "[Click here!](https://discord.com/api/oauth2/authorize?client_id=905891689581916210&permissions=314432&scope=bot)", "https://i.imgur.com/NldSwaZ.png"))
 		}
 	}
 }
+
 // ----------END INVITE COMMAND ---------\\
 
 // --------HELP COMMAND------------\\
-func help(s * discordgo.Session, m * discordgo.MessageCreate) {
+func help(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == ".help" {
 		if m.Author.ID != s.State.User.ID {
 
-			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Help Commands", ".ping\n.bj\n.rps\n.source", "https://i.imgur.com/NldSwaZ.png"))
+			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Help Commands", ".ping\n.bj\n.rps\n.source\n.trivia\n.rpg", "https://i.imgur.com/NldSwaZ.png"))
 
 		}
 	}
 }
+
 // --------END HELP COMMAND------------\\
+// --------RPG COMMAND------------\\
+func rpg(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID != s.State.User.ID {
+		if m.Content == ".fight" {
+
+			msg, err := s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "RPG Game Prompt", "React below to start the game", "https://i.ibb.co/PWGpqCs/swords.png"))
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			originaluserid = m.Author.ID
+			s.MessageReactionAdd(m.ChannelID, msg.ID, "⚔️")
+			restoreData()
+		}
+	}}
+var data = PlayerInfo {
+	P1Health: 50,
+	P2Health: 50,
+	P1Pots: 3,
+	P2Pots: 3,
+	P1Shield: false,
+	P2Shield: false,
+}
+func restoreData() {
+	data.P1Health = 50
+	data.P2Health = 50
+	data.P1Pots = 3
+	data.P2Pots = 3
+	data.P1Shield = false
+	data.P2Shield = false
+}
+func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	if r.UserID != s.State.User.ID {
+		if r.UserID == originaluserid {
+
+
+			if r.Emoji.Name == "⚔️" {
+				s.ChannelMessageSend(r.ChannelID, "Its your turn! <@"+r.UserID+">")
+				msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+			}
+			if r.Emoji.Name == "🗡️" {
+				if (turn & 1 == 0) {
+					s.ChannelMessageSend(r.ChannelID, "AI is now attacking..")
+					min1 := 1
+					max1 := 100
+					rand.Seed(time.Now().UnixNano())
+					var shieldchance = rand.Intn(max1-min1)+min1
+					fmt.Println(shieldchance)
+					if shieldchance > 50 {
+						data.P2Shield = true
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Shield Activated!", "Player 2 has activated their shield they will take 30-50% less damage next turn", "https://i.ibb.co/6ZTJ30b/shield.png"))
+						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+						if err != nil {
+							fmt.Println(err)
+							return
+						}
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+						if data.P2Health <= 0 {
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+							restoreData()
+						}else if data.P2Health <= 0 {
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+							restoreData()
+						}
+						return
+					}else{
+					min := 1
+					max := 18
+					rand.Seed(time.Now().UnixNano())
+					var p2damage = rand.Intn(max-min)+min
+					s.ChannelMessageSend(r.ChannelID, "Rolling the dice.. <a:rollingdice:916476161591246859>")
+					if data.P1Shield == true {
+						var p2shielddamage = float64(p2damage) * 0.3
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "AI dealt "+strconv.Itoa(p2damage)+" but you had a shield active so they only dealt "+strconv.Itoa(int(p2shielddamage)), "https://i.ibb.co/6ZTJ30b/shield.png"))
+						data.P2Health -= int(p2shielddamage)
+						turn += 1
+						data.P1Shield = false
+						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+						if err != nil {
+							fmt.Println(err)
+							return
+						}
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+						if data.P2Health <= 0 {
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+							restoreData()
+						} else if data.P2Health <= 0 {
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+							restoreData()
+						}
+						return
+					}
+						if shieldchance < 25 {
+							if shieldchance < 25 {
+								if data.P2Pots > 0 {
+									data.P2Pots -= 1
+									s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Honey Pot", "The AI drank a honeypot and they gained 25 health", "https://i.ibb.co/G38Z0M6/honey.png"))
+									data.P2Health += 25
+									msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+									if err != nil {
+										fmt.Println(err)
+										return
+									}
+									turn += 1
+									s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+									s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+									s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+									return
+								}
+							}
+						}
+					if data.P2Shield == false {
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "AI dealt "+strconv.Itoa(p2damage)+" damage", "https://i.ibb.co/fMWLxdj/hammer.png"))
+
+						turn+=1
+						data.P1Health-=p2damage
+						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+						if err != nil {
+							fmt.Println(err)
+							return
+						}
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+						s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+						if data.P2Health <= 0 {
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+							restoreData()
+						}else if data.P2Health <= 0 {
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+							restoreData()
+						}
+						return
+					}
+				}}
+				s.ChannelMessageSend(r.ChannelID, "Attacking AI with sword")
+				min := 1
+				max := 18
+				rand.Seed(time.Now().UnixNano())
+				var p1damage = rand.Intn(max-min)+min
+				s.ChannelMessageSend(r.ChannelID, "Rolling the dice.. <a:rollingdice:916476161591246859>")
+			if data.P2Shield == true {
+				var p1shielddamage = float64(p1damage) * 0.3
+				fmt.Println(p1shielddamage)
+				s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "You dealt "+strconv.Itoa(p1damage)+" but they had a shield active so you only dealt "+strconv.Itoa(int(p1shielddamage)), "https://i.ibb.co/6ZTJ30b/shield.png"))
+				data.P2Health-=int(p1shielddamage)
+				turn+=1
+				data.P2Shield = false
+				msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+				if data.P2Health <= 0 {
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+					restoreData()
+				}else if data.P2Health <= 0 {
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+					restoreData()
+				}
+				return
+			}else if data.P2Shield == false {
+				msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "You dealt "+strconv.Itoa(p1damage)+" damage", "https://i.ibb.co/fMWLxdj/hammer.png"))
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				turn+=1
+				data.P2Health-=p1damage
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+				if data.P2Health <= 0 {
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+					restoreData()
+				}else if data.P2Health <= 0 {
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+					restoreData()
+				}
+				return
+			}
+
+			}
+			if r.Emoji.Name == "🛡️" {
+				if (turn & 1 == 0) {
+					return
+				}
+				data.P1Shield = true
+				s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Shield Activated!", "You have activated their shield they will take 30-50% less damage next turn", "https://i.ibb.co/6ZTJ30b/shield.png"))
+				msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				turn+=1
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+				return
+			}
+			if r.Emoji.Name == "🍯" {
+				if (turn & 1 == 0) {
+					return
+				}
+				if data.P1Pots > 0 {
+					data.P1Pots -=1
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Honey Pot", "You drank a honeypot and gained 25 health", "https://i.ibb.co/G38Z0M6/honey.png"))
+					data.P1Health+=25
+					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					turn+=1
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+					return
+				}
+			}
+
+	}
+		}
+	}
 // --------BLACK JACK COMMAND------------\\
-func black_jack(s * discordgo.Session, m * discordgo.MessageCreate) {
+func black_jack(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == ".bj" {
 		originaluserid = m.Author.ID
 		msg, err := s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Discord Black Jack", "React below to start the game!", "https://imgur.com/BbgsSmC.png"))
@@ -185,9 +438,10 @@ func black_jack(s * discordgo.Session, m * discordgo.MessageCreate) {
 		originalmessageid = msg.ID
 	}
 }
+
 // --------END BLACK JACK COMMAND------------\\
 // --------------------STATS COMMAND------------\\
-func stats(s * discordgo.Session, m * discordgo.MessageCreate) {
+func stats(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == ".stats" {
 		if m.Author.ID != s.State.User.ID {
 			jsonFile, err := os.Open("rps.json")
@@ -200,9 +454,9 @@ func stats(s * discordgo.Session, m * discordgo.MessageCreate) {
 			byteValue, _ := ioutil.ReadAll(jsonFile)
 
 			json.Unmarshal(byteValue, &gamer)
-			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Rock Paper Scissors Total game stats", "Wins: " + strconv.Itoa(gamer.Games[0].Rps.Wins) + "\nLosses: " + strconv.Itoa(gamer.Games[0].Rps.Losses) + "\nTies: " + strconv.Itoa(gamer.Games[0].Rps.Ties), "https://i.imgur.com/i7G2Yuc.png"))
+			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Rock Paper Scissors Total game stats", "Wins: "+strconv.Itoa(gamer.Games[0].Rps.Wins)+"\nLosses: "+strconv.Itoa(gamer.Games[0].Rps.Losses)+"\nTies: "+strconv.Itoa(gamer.Games[0].Rps.Ties), "https://i.imgur.com/i7G2Yuc.png"))
 			jsonfile, err := os.Open("blackjack.json")
-			if err!= nil {
+			if err != nil {
 				fmt.Println("Error", err)
 			}
 			var bj Games2
@@ -210,22 +464,24 @@ func stats(s * discordgo.Session, m * discordgo.MessageCreate) {
 			defer jsonfile.Close()
 			biteValue, _ := ioutil.ReadAll(jsonfile)
 			json.Unmarshal(biteValue, &bj)
-			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Black Jack Total game stats", "Wins: " + strconv.Itoa(bj.Games2[0].BlackJack.Wins) + "\nLosses: " + strconv.Itoa(bj.Games2[0].BlackJack.Losses) + "\nTies: " + strconv.Itoa(bj.Games2[0].BlackJack.Ties), "https://imgur.com/BbgsSmC.png"))
+			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Black Jack Total game stats", "Wins: "+strconv.Itoa(bj.Games2[0].BlackJack.Wins)+"\nLosses: "+strconv.Itoa(bj.Games2[0].BlackJack.Losses)+"\nTies: "+strconv.Itoa(bj.Games2[0].BlackJack.Ties), "https://imgur.com/BbgsSmC.png"))
 		}
 	}
 }
+
 // --------------------END STATS COMMAND------------\\
 // --------------------SOURCE COMMAND------------\\
-func source(s * discordgo.Session, m * discordgo.MessageCreate) {
+func source(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID != s.State.User.ID {
 		if m.Content == ".source" {
-			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("bj", "Source code!", "Visit the repository here, https://github.com/zLeki/discord.go-Golang-Game-Bot", "https://opengraph.githubassets.com/1d74613fd71a8b3a3271d6bcf224e2f382c09ceaa7a67da525473e2658fbfea2/zLeki/discord.go-Golang-Game-Bot"))
+			s.ChannelMessageSendEmbed(m.ChannelID, EmbedMsgHello("rps", "Source code!", "Visit the repository here, https://github.com/zLeki/discord.go-Golang-Game-Bot", "https://opengraph.githubassets.com/1d74613fd71a8b3a3271d6bcf224e2f382c09ceaa7a67da525473e2658fbfea2/zLeki/discord.go-Golang-Game-Bot"))
 		}
 	}
 }
+
 // --------------------END SOURCE COMMAND------------\\
 // --------------------PING COMMAND------------\\
-func ping(s * discordgo.Session, m * discordgo.MessageCreate) {
+func ping(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == ".ping" {
 		if m.Author.ID != s.State.User.ID {
 			s.ChannelMessageSend(m.ChannelID, s.HeartbeatLatency().String())
@@ -233,8 +489,9 @@ func ping(s * discordgo.Session, m * discordgo.MessageCreate) {
 		}
 	}
 }
+
 // --------------------ROCK PAPER SCISSORS------------\\
-func on_message(s * discordgo.Session, m * discordgo.MessageCreate) {
+func on_message(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Author.ID != s.State.User.ID {
 		if m.Content == ".rps" {
@@ -252,11 +509,11 @@ func on_message(s * discordgo.Session, m * discordgo.MessageCreate) {
 		}
 	}
 }
+
 // --------END ROCK PAPER SCISSORS COMMAND------------\\
 
-
 // -------RPS FUNCTIONS------------\\
-func rps(s * discordgo.Session, r * discordgo.MessageReactionAdd) {
+func rps(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	if r.UserID != s.State.User.ID {
 		if r.UserID == originaluserid {
 			fmt.Println(r.Emoji.Name, r.ChannelID)
@@ -270,23 +527,19 @@ func rps(s * discordgo.Session, r * discordgo.MessageReactionAdd) {
 			reasons := make([]string, 0)
 			var paper = ":page_facing_up:"
 			reasons = append(reasons,
-				"rock",  // rock
-				"paper", // paper
+				"rock",     // rock
+				"paper",    // paper
 				"scissors") // scissors
 			selected := reasons[rand.Intn(len(reasons))]
 
 			if r.Emoji.Name == "🎴" { // BlackJack part 1
-				for i := 0;
-					i < 2;
-				i++ {
+				for i := 0; i < 2; i++ {
 					min := 2
 					max := 11
 					rand.Seed(time.Now().UnixNano())
 					player1hand = append(player1hand, rand.Intn(max-min)+min)
 				}
-				for i := 0;
-					i < 2;
-				i++ {
+				for i := 0; i < 2; i++ {
 					min := 2
 					max := 11
 					rand.Seed(time.Now().UnixNano())
@@ -323,6 +576,7 @@ func rps(s * discordgo.Session, r * discordgo.MessageReactionAdd) {
 				}
 			}
 			if r.Emoji.Name == "✂️" {
+				fmt.Println(`scissors`)
 				fmt.Println("hi")
 				if selected != "scissors" {
 					if selected == "rock" {
@@ -342,6 +596,7 @@ func rps(s * discordgo.Session, r * discordgo.MessageReactionAdd) {
 					savetoJson("rps", wins, losses, ties)
 				}
 			} else if r.Emoji.Name == "📄" {
+				fmt.Println(`paper`)
 				if selected != "paper" {
 					if selected == "scissors" {
 						losses += 1
@@ -378,172 +633,171 @@ func rps(s * discordgo.Session, r * discordgo.MessageReactionAdd) {
 				originaluserid = ""
 				fmt.Println(originaluserid)
 				fmt.Println("tes")
+			}}
+		var bjwins = 0
+		var bjlosses = 0
+		var bjties = 0
+		if r.Emoji.Name == "⏸️" {
+			if r.UserID == s.State.User.ID {
+				return
 			}
-			var bjwins = 0
-			var bjlosses = 0
-			var bjties = 0
-			if r.Emoji.Name == "⏸️" {
-				if r.UserID == s.State.User.ID {
-					return
-				}
-				print("hi")
-				if enemytotal <= 18 {
-					min := 2
-					max := 11
-					rand.Seed(time.Now().UnixNano())
-					enemytotal += rand.Intn(max-min) + min
-					s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
-					if playertotal <= 21 || enemytotal <= 21 {
-						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
-						if err != nil {
-							fmt.Println(err)
-						}
-						fmt.Println(playertotal, enemytotal)
-						originalmessageid = msg.ID
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
-						if enemytotal > 21 || playertotal == 21 {
-							bjwins += 1
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
-							savetoJson("blackjack", bjwins, bjlosses, bjties)
-							return
-						}
-						if playertotal > 21 {
-							bjlosses += 1
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
-							return
-							if enemytotal == 21 {
-								bjlosses += 1
-								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
-
-								return
-							}
-						}
+			print("hi")
+			if enemytotal <= 18 {
+				min := 2
+				max := 11
+				rand.Seed(time.Now().UnixNano())
+				enemytotal += rand.Intn(max-min) + min
+				s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
+				if playertotal <= 21 || enemytotal <= 21 {
+					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
+					if err != nil {
+						fmt.Println(err)
 					}
-				} else {
-					s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
-					if playertotal > enemytotal {
-						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
+					fmt.Println(playertotal, enemytotal)
+					originalmessageid = msg.ID
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+					if enemytotal > 21 || playertotal == 21 {
 						bjwins += 1
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
 						savetoJson("blackjack", bjwins, bjlosses, bjties)
 						return
 					}
-					if enemytotal > playertotal {
+					if playertotal > 21 {
 						bjlosses += 1
 						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
 						return
-					}
-					if enemytotal == playertotal {
-						bjties += 1
-						savetoJson("blackjack", bjwins, bjlosses, bjties)
-						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Its a tie!", "You have +"+strconv.Itoa(playertotal)+" social credit", "https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Foriginal%2F000%2F027%2F195%2Fcover10.jpg"))
-						return
-					}
-					if playertotal <= 21 || enemytotal <= 21 {
-						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
-						if err != nil {
-							fmt.Println(err)
-						}
-						fmt.Println(playertotal, enemytotal)
-						originalmessageid = msg.ID
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
-						if enemytotal > 21 || playertotal == 21 {
-							bjwins += 1
-							savetoJson("blackjack", bjwins, bjlosses, bjties)
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
-							return
-						}
-						if playertotal > 21 {
+						if enemytotal == 21 {
 							bjlosses += 1
-							savetoJson("blackjack", bjwins, bjlosses, bjties)
 							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
+
 							return
-							if enemytotal == 21 {
-								bjlosses += 1
-								savetoJson("blackjack", bjwins, bjlosses, bjties)
-								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
-								return
-							}
 						}
 					}
 				}
-			}
-
-			if r.Emoji.Name == "⬆️" {
-				if r.UserID == s.State.User.ID {
+			} else {
+				s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
+				if playertotal > enemytotal {
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
+					bjwins += 1
+					savetoJson("blackjack", bjwins, bjlosses, bjties)
 					return
 				}
-				if enemytotal <= 18 {
-					min := 2
-					max := 11
-					rand.Seed(time.Now().UnixNano())
-					enemytotal += rand.Intn(max-min) + min
-					rand.Seed(time.Now().UnixNano())
-					playertotal += rand.Intn(max-min) + min
-					s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
-					if playertotal <= 21 || enemytotal <= 21 {
-						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
-						if err != nil {
-							fmt.Println(err)
-						}
-						originalmessageid = msg.ID
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
-						if enemytotal > 21 || playertotal == 21 {
-							bjwins += 1
-							savetoJson("blackjack", bjwins, bjlosses, bjties)
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
-						}
-						if playertotal > 21 {
-							bjlosses += 1
-							savetoJson("blackjack", bjwins, bjlosses, bjties)
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
-
-							if enemytotal == 21 {
-								bjlosses += 1
-								savetoJson("blackjack", bjwins, bjlosses, bjties)
-								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
-							}
-						}
+				if enemytotal > playertotal {
+					bjlosses += 1
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
+					return
+				}
+				if enemytotal == playertotal {
+					bjties += 1
+					savetoJson("blackjack", bjwins, bjlosses, bjties)
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Its a tie!", "You have +"+strconv.Itoa(playertotal)+" social credit", "https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Foriginal%2F000%2F027%2F195%2Fcover10.jpg"))
+					return
+				}
+				if playertotal <= 21 || enemytotal <= 21 {
+					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
+					if err != nil {
+						fmt.Println(err)
 					}
-				} else {
-					s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
-					min := 2
-					max := 11
-					rand.Seed(time.Now().UnixNano())
-					playertotal += rand.Intn(max-min) + min
-					if playertotal <= 21 || enemytotal <= 21 {
-						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
-						if err != nil {
-							fmt.Println(err)
-						}
-						if playertotal == enemytotal {
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Its a tie!", "You have +"+strconv.Itoa(playertotal)+" social credit", "https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Foriginal%2F000%2F027%2F195%2Fcover10.jpg"))
-							bjties += 1
-							savetoJson("blackjack", bjwins, bjlosses, bjties)
-							return
-						}
-						fmt.Println(playertotal, enemytotal)
-						originalmessageid = msg.ID
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
-						if enemytotal > 21 || playertotal == 21 {
-							bjwins += 1
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
-						}
-						if playertotal > 21 {
+					fmt.Println(playertotal, enemytotal)
+					originalmessageid = msg.ID
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+					if enemytotal > 21 || playertotal == 21 {
+						bjwins += 1
+						savetoJson("blackjack", bjwins, bjlosses, bjties)
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
+						return
+					}
+					if playertotal > 21 {
+						bjlosses += 1
+						savetoJson("blackjack", bjwins, bjlosses, bjties)
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
+						return
+						if enemytotal == 21 {
 							bjlosses += 1
 							savetoJson("blackjack", bjwins, bjlosses, bjties)
 							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
-							if enemytotal == 21 {
-								bjlosses += 1
-								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
-							}
+							return
 						}
 					}
 				}
 			}
-    }
-  }
+		}
+
+		if r.Emoji.Name == "⬆️" {
+			if r.UserID == s.State.User.ID {
+				return
+			}
+			if enemytotal <= 18 {
+				min := 2
+				max := 11
+				rand.Seed(time.Now().UnixNano())
+				enemytotal += rand.Intn(max-min) + min
+				rand.Seed(time.Now().UnixNano())
+				playertotal += rand.Intn(max-min) + min
+				s.ChannelMessageSend(r.ChannelID, "**Player2 is hitting**")
+				if playertotal <= 21 || enemytotal <= 21 {
+					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
+					if err != nil {
+						fmt.Println(err)
+					}
+					originalmessageid = msg.ID
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+					if enemytotal > 21 || playertotal == 21 {
+						bjwins += 1
+						savetoJson("blackjack", bjwins, bjlosses, bjties)
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
+					}
+					if playertotal > 21 {
+						bjlosses += 1
+						savetoJson("blackjack", bjwins, bjlosses, bjties)
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
+
+						if enemytotal == 21 {
+							bjlosses += 1
+							savetoJson("blackjack", bjwins, bjlosses, bjties)
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
+						}
+					}
+				}
+			} else {
+				s.ChannelMessageSend(r.ChannelID, "**Player2 is staying**")
+				min := 2
+				max := 11
+				rand.Seed(time.Now().UnixNano())
+				playertotal += rand.Intn(max-min) + min
+				if playertotal <= 21 || enemytotal <= 21 {
+					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Black Jack", "Opponent hand \n** = "+strconv.Itoa(enemytotal)+"**\n\nYour hand: \n** = "+strconv.Itoa(playertotal)+"**", "https://imgur.com/BbgsSmC.png"))
+					if err != nil {
+						fmt.Println(err)
+					}
+					if playertotal == enemytotal {
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Its a tie!", "You have +"+strconv.Itoa(playertotal)+" social credit", "https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Foriginal%2F000%2F027%2F195%2Fcover10.jpg"))
+						bjties += 1
+						savetoJson("blackjack", bjwins, bjlosses, bjties)
+						return
+					}
+					fmt.Println(playertotal, enemytotal)
+					originalmessageid = msg.ID
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⬆️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "⏸️")
+					if enemytotal > 21 || playertotal == 21 {
+						bjwins += 1
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You have "+strconv.Itoa(playertotal*7)+" social credit", "https://i.ytimg.com/vi/7Kl_lU_ZaBw/maxresdefault.jpg"))
+					}
+					if playertotal > 21 {
+						bjlosses += 1
+						savetoJson("blackjack", bjwins, bjlosses, bjties)
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
+						if enemytotal == 21 {
+							bjlosses += 1
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose!", "You have -"+strconv.Itoa(playertotal*7)+" social credit GAMBLING IS NOT ALOUD ON CHINESE LANDS", "https://img.ifunny.co/images/3c4cfb8f47538c3a4be0693fbac0113be89cff56269a20674aa2fc2438108d00_3.jpg"))
+						}
+					}
+				}
+			}
+		}
+	}
 }
