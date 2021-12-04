@@ -80,7 +80,7 @@ func savetoJson(gametype string, wins int, losses int, ties int) {
 }
 
 func main() {
-	dg, err := discordgo.New("Bot " + "token")
+	dg, err := discordgo.New("Bot " + "to")
 	if err != nil {
 		fmt.Println("error created while making a bot")
 		return
@@ -262,6 +262,7 @@ func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
 							restoreData()
 						}
+						turn+=1
 						return
 					}else{
 					min := 1
