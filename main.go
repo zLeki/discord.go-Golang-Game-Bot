@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 type Games struct {
@@ -49,6 +50,7 @@ var enemytotal = 0
 var originaluserid = ""
 var originalmessageid = ""
 var turn = 1
+
 func savetoJson(gametype string, wins int, losses int, ties int) {
 	fmt.Println(wins, losses, ties)
 	switch gametype {
@@ -107,7 +109,7 @@ func main() {
 	<-sc
 
 }
-func on_ready(s *discordgo.Session, e *discordgo.Ready) {
+func on_ready(s *discordgo.Session, _ *discordgo.Ready) {
 	fmt.Println("Bot online")
 	s.UpdateGameStatus(0, ".help | Made in golang with love")
 }
@@ -203,15 +205,18 @@ func rpg(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.MessageReactionAdd(m.ChannelID, msg.ID, "⚔️")
 			restoreData()
 		}
-	}}
-var data = PlayerInfo {
+	}
+}
+
+var data = PlayerInfo{
 	P1Health: 50,
 	P2Health: 50,
-	P1Pots: 3,
-	P2Pots: 3,
+	P1Pots:   3,
+	P2Pots:   3,
 	P1Shield: false,
 	P2Shield: false,
 }
+
 func restoreData() {
 	data.P1Health = 50
 	data.P2Health = 50
@@ -223,7 +228,6 @@ func restoreData() {
 func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	if r.UserID != s.State.User.ID {
 		if r.UserID == originaluserid {
-
 
 			if r.Emoji.Name == "⚔️" {
 				s.ChannelMessageSend(r.ChannelID, "Its your turn! <@"+r.UserID+">")
@@ -237,12 +241,12 @@ func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
 			}
 			if r.Emoji.Name == "🗡️" {
-				if (turn & 1 == 0) {
+				if turn&1 == 0 {
 					s.ChannelMessageSend(r.ChannelID, "AI is now attacking..")
 					min1 := 1
 					max1 := 100
 					rand.Seed(time.Now().UnixNano())
-					var shieldchance = rand.Intn(max1-min1)+min1
+					var shieldchance = rand.Intn(max1-min1) + min1
 					fmt.Println(shieldchance)
 					if shieldchance > 50 {
 						data.P2Shield = true
@@ -258,41 +262,41 @@ func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 						if data.P2Health <= 0 {
 							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
 							restoreData()
-						}else if data.P2Health <= 0 {
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
-							restoreData()
-						}
-						turn+=1
-						return
-					}else{
-					min := 1
-					max := 18
-					rand.Seed(time.Now().UnixNano())
-					var p2damage = rand.Intn(max-min)+min
-					s.ChannelMessageSend(r.ChannelID, "Rolling the dice.. <a:rollingdice:916476161591246859>")
-					if data.P1Shield == true {
-						var p2shielddamage = float64(p2damage) * 0.3
-						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "AI dealt "+strconv.Itoa(p2damage)+" but you had a shield active so they only dealt "+strconv.Itoa(int(p2shielddamage)), "https://i.ibb.co/6ZTJ30b/shield.png"))
-						data.P2Health -= int(p2shielddamage)
-						turn += 1
-						data.P1Shield = false
-						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
-						if err != nil {
-							fmt.Println(err)
-							return
-						}
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
-						if data.P2Health <= 0 {
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
-							restoreData()
 						} else if data.P2Health <= 0 {
 							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
 							restoreData()
 						}
+						turn += 1
 						return
-					}
+					} else {
+						min := 1
+						max := 18
+						rand.Seed(time.Now().UnixNano())
+						var p2damage = rand.Intn(max-min) + min
+						s.ChannelMessageSend(r.ChannelID, "Rolling the dice.. <a:rollingdice:916476161591246859>")
+						if data.P1Shield == true {
+							var p2shielddamage = float64(p2damage) * 0.3
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "AI dealt "+strconv.Itoa(p2damage)+" but you had a shield active so they only dealt "+strconv.Itoa(int(p2shielddamage)), "https://i.ibb.co/6ZTJ30b/shield.png"))
+							data.P2Health -= int(p2shielddamage)
+							turn += 1
+							data.P1Shield = false
+							msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+							if err != nil {
+								fmt.Println(err)
+								return
+							}
+							s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+							s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+							s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+							if data.P2Health <= 0 {
+								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+								restoreData()
+							} else if data.P2Health <= 0 {
+								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+								restoreData()
+							}
+							return
+						}
 						if shieldchance < 25 {
 							if shieldchance < 25 {
 								if data.P2Pots > 0 {
@@ -312,82 +316,83 @@ func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 								}
 							}
 						}
-					if data.P2Shield == false {
-						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "AI dealt "+strconv.Itoa(p2damage)+" damage", "https://i.ibb.co/fMWLxdj/hammer.png"))
+						if data.P2Shield == false {
+							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "AI dealt "+strconv.Itoa(p2damage)+" damage", "https://i.ibb.co/fMWLxdj/hammer.png"))
 
-						turn+=1
-						data.P1Health-=p2damage
-						msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
-						if err != nil {
-							fmt.Println(err)
+							turn += 1
+							data.P1Health -= p2damage
+							msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+							if err != nil {
+								fmt.Println(err)
+								return
+							}
+							s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+							s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+							s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+							if data.P2Health <= 0 {
+								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+								restoreData()
+							} else if data.P2Health <= 0 {
+								s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+								restoreData()
+							}
 							return
 						}
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
-						s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
-						if data.P2Health <= 0 {
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
-							restoreData()
-						}else if data.P2Health <= 0 {
-							s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
-							restoreData()
-						}
-						return
 					}
-				}}
+				}
 				s.ChannelMessageSend(r.ChannelID, "Attacking AI with sword")
 				min := 1
 				max := 18
 				rand.Seed(time.Now().UnixNano())
-				var p1damage = rand.Intn(max-min)+min
+				var p1damage = rand.Intn(max-min) + min
 				s.ChannelMessageSend(r.ChannelID, "Rolling the dice.. <a:rollingdice:916476161591246859>")
-			if data.P2Shield == true {
-				var p1shielddamage = float64(p1damage) * 0.3
-				fmt.Println(p1shielddamage)
-				s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "You dealt "+strconv.Itoa(p1damage)+" but they had a shield active so you only dealt "+strconv.Itoa(int(p1shielddamage)), "https://i.ibb.co/6ZTJ30b/shield.png"))
-				data.P2Health-=int(p1shielddamage)
-				turn+=1
-				data.P2Shield = false
-				msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
-				if err != nil {
-					fmt.Println(err)
+				if data.P2Shield == true {
+					var p1shielddamage = float64(p1damage) * 0.3
+					fmt.Println(p1shielddamage)
+					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "You dealt "+strconv.Itoa(p1damage)+" but they had a shield active so you only dealt "+strconv.Itoa(int(p1shielddamage)), "https://i.ibb.co/6ZTJ30b/shield.png"))
+					data.P2Health -= int(p1shielddamage)
+					turn += 1
+					data.P2Shield = false
+					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+					if data.P2Health <= 0 {
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+						restoreData()
+					} else if data.P2Health <= 0 {
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+						restoreData()
+					}
+					return
+				} else if data.P2Shield == false {
+					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "You dealt "+strconv.Itoa(p1damage)+" damage", "https://i.ibb.co/fMWLxdj/hammer.png"))
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					turn += 1
+					data.P2Health -= p1damage
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
+					s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
+					if data.P2Health <= 0 {
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
+						restoreData()
+					} else if data.P2Health <= 0 {
+						s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
+						restoreData()
+					}
 					return
 				}
-				s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
-				s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
-				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
-				if data.P2Health <= 0 {
-					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
-					restoreData()
-				}else if data.P2Health <= 0 {
-					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
-					restoreData()
-				}
-				return
-			}else if data.P2Shield == false {
-				msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Damage Dealt", "You dealt "+strconv.Itoa(p1damage)+" damage", "https://i.ibb.co/fMWLxdj/hammer.png"))
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				turn+=1
-				data.P2Health-=p1damage
-				s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
-				s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
-				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
-				if data.P2Health <= 0 {
-					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You win!", "You win the match!", "https://image.shutterstock.com/image-photo/medal-first-place-hand-victory-260nw-672771154.jpg"))
-					restoreData()
-				}else if data.P2Health <= 0 {
-					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "You lose LOL", "you lost to my smart ai", "https://i.ebayimg.com/images/g/tRIAAOSw8UtbR7rW/s-l400.jpg"))
-					restoreData()
-				}
-				return
-			}
 
 			}
 			if r.Emoji.Name == "🛡️" {
-				if (turn & 1 == 0) {
+				if turn&1 == 0 {
 					return
 				}
 				data.P1Shield = true
@@ -397,26 +402,26 @@ func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 					fmt.Println(err)
 					return
 				}
-				turn+=1
+				turn += 1
 				s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
 				s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
 				s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
 				return
 			}
 			if r.Emoji.Name == "🍯" {
-				if (turn & 1 == 0) {
+				if turn&1 == 0 {
 					return
 				}
 				if data.P1Pots > 0 {
-					data.P1Pots -=1
+					data.P1Pots -= 1
 					s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Honey Pot", "You drank a honeypot and gained 25 health", "https://i.ibb.co/G38Z0M6/honey.png"))
-					data.P1Health+=25
+					data.P1Health += 25
 					msg, err := s.ChannelMessageSendEmbed(r.ChannelID, EmbedMsgHello("bj", "Fight!", "<@"+r.UserID+"> 's Health:"+strconv.Itoa(data.P1Health)+"\n\nAI's Health:"+strconv.Itoa(data.P2Health), "https://i.ibb.co/PWGpqCs/swords.png"))
 					if err != nil {
 						fmt.Println(err)
 						return
 					}
-					turn+=1
+					turn += 1
 					s.MessageReactionAdd(r.ChannelID, msg.ID, "🗡️")
 					s.MessageReactionAdd(r.ChannelID, msg.ID, "🛡️")
 					s.MessageReactionAdd(r.ChannelID, msg.ID, "🍯")
@@ -424,9 +429,10 @@ func RpgBack(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 				}
 			}
 
-	}
 		}
 	}
+}
+
 // --------BLACK JACK COMMAND------------\\
 func black_jack(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == ".bj" {
@@ -634,7 +640,8 @@ func rps(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 				originaluserid = ""
 				fmt.Println(originaluserid)
 				fmt.Println("tes")
-			}}
+			}
+		}
 		var bjwins = 0
 		var bjlosses = 0
 		var bjties = 0
