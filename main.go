@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 type Games struct {
@@ -108,7 +109,7 @@ func main() {
 	<-sc
 
 }
-func on_ready(s *discordgo.Session, e *discordgo.Ready) {
+func on_ready(s *discordgo.Session, _ *discordgo.Ready) {
 	fmt.Println("Bot online")
 	s.UpdateGameStatus(0, ".help | Made in golang with love")
 }
